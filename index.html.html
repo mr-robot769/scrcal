@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WareRepair Scrap Calculator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #0d0d0d;
+    --panel: #141414;
+    --border: #2a2a2a;
+    --accent: #e8b84b;
+    --accent2: #c0392b;
+    --text: #e8e8e8;
+    --muted: #666;
+    --green: #2ecc71;
+    --blue: #3498db;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+    padding: 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .header {
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 14px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+
+  .header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 38px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+
+  .header span {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .tab-bar {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    padding: 10px 24px;
+    cursor: pointer;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* API Bar */
+  .api-bar {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid #444;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .api-bar label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  .api-bar input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    outline: none;
+  }
+
+  /* Settings */
+  .settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 600px) { .settings-grid { grid-template-columns: 1fr; } }
+
+  .settings-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 12px 14px;
+  }
+
+  .settings-panel.accent-yellow { border-left: 3px solid var(--accent); }
+  .settings-panel.accent-green  { border-left: 3px solid var(--green); }
+  .settings-panel.accent-blue   { border-left: 3px solid var(--blue); }
+  .settings-panel.accent-red    { border-left: 3px solid var(--accent2); }
+
+  .settings-panel h3 {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+  }
+
+  .row-fields { display: flex; flex-wrap: wrap; gap: 16px; }
+
+  .mini-field { display: flex; flex-direction: column; gap: 4px; }
+
+  .mini-field label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .mini-field input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 15px;
+    font-weight: 600;
+    width: 90px;
+    outline: none;
+    padding: 2px 4px;
+  }
+
+  .mini-field input.green { color: var(--green); }
+  .mini-field input.blue  { color: var(--blue); }
+  .mini-field input.red   { color: var(--accent2); }
+
+  /* VIN Input Section */
+  .vin-section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+
+  .vin-section h3 {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+  }
+
+  .vin-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .vin-row input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 10px 14px;
+    outline: none;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: border-color 0.2s;
+  }
+
+  .vin-row input:focus { border-color: var(--accent); }
+  .vin-row input::placeholder { letter-spacing: 1px; font-weight: 400; font-size: 13px; color: var(--muted); }
+
+  .btn-decode {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn-decode:hover { background: #f5c842; }
+  .btn-decode:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+
+  /* VIN decoded result badge */
+  .vin-decoded {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #0d1a0d;
+    border: 1px solid var(--green);
+    font-size: 12px;
+    color: var(--green);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .vin-decoded .clear-vin {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+  }
+
+  .vin-decoded .clear-vin:hover { color: var(--accent2); }
+
+  /* Manual fallback */
+  .manual-section {
+    margin-bottom: 16px;
+  }
+
+  .manual-toggle {
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    margin-bottom: 10px;
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .manual-toggle:hover { color: var(--accent); }
+
+  .manual-fields {
+    display: none;
+    grid-template-columns: 70px 1fr 1fr 1fr;
+    gap: 8px;
+  }
+
+  .manual-fields.open { display: grid; }
+
+  @media (max-width: 600px) { .manual-fields { grid-template-columns: 1fr 1fr; } }
+
+  .field label {
+    display: block;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 5px;
+  }
+
+  .field input {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    padding: 9px 10px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .field input:focus { border-color: var(--accent); }
+
+  /* Lookup button */
+  .btn-lookup {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 2px;
+    padding: 12px 0;
+    cursor: pointer;
+    transition: background 0.15s;
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  .btn-lookup:hover { background: #f5c842; }
+  .btn-lookup:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+
+  /* Max Pay Banner */
+  .max-pay-banner {
+    background: #0d1f0d;
+    border: 1px solid var(--green);
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    animation: slideIn 0.25s ease;
+  }
+
+  .max-pay-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+
+  .max-pay-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 44px;
+    color: var(--green);
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+
+  .max-pay-breakdown {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: right;
+    line-height: 1.9;
+  }
+
+  /* Result Panel */
+  .result-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    margin-bottom: 10px;
+    overflow: hidden;
+    animation: slideIn 0.25s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-header {
+    background: #1a1a1a;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .result-vehicle {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+
+  .result-vin {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .result-body {
+    padding: 14px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 14px;
+  }
+
+  .stat { border-left: 2px solid var(--border); padding-left: 10px; }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 3px;
+  }
+
+  .stat-value { font-size: 18px; font-weight: 600; }
+  .stat-value.green  { color: var(--green); }
+  .stat-value.yellow { color: var(--accent); }
+  .stat-value.red    { color: var(--accent2); }
+  .stat-value.blue   { color: var(--blue); }
+  .stat-value.white  { color: var(--text); }
+
+  .stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .section-divider {
+    grid-column: 1 / -1;
+    border-top: 1px dashed var(--border);
+    padding-top: 4px;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .parts-list {
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .parts-list h4 {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .parts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 5px;
+  }
+
+  .part-item {
+    display: flex;
+    justify-content: space-between;
+    background: #1a1a1a;
+    padding: 6px 9px;
+    font-size: 12px;
+  }
+
+  .part-name { color: var(--text); }
+  .part-val  { color: var(--accent2); font-weight: 600; }
+
+  .narrative {
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #888;
+    line-height: 1.7;
+    border-top: 1px solid var(--border);
+  }
+
+  .loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .loading-steps { display: flex; flex-direction: column; gap: 3px; }
+  .loading-step { font-size: 11px; color: var(--muted); }
+  .loading-step.active { color: var(--accent); }
+  .loading-step.done { color: var(--green); }
+
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-msg {
+    padding: 14px;
+    color: var(--accent2);
+    font-size: 13px;
+    border-left: 3px solid var(--accent2);
+  }
+
+  /* Batch */
+  .batch-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .summary-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 12px;
+  }
+
+  .summary-card.highlight  { border-color: var(--green);  background: #0d1a0d; }
+  .summary-card.highlight2 { border-color: var(--accent); background: #1a140d; }
+
+  .summary-card-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+  }
+
+  .summary-card-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 1px;
+    line-height: 1;
+  }
+
+  .summary-card-value.green  { color: var(--green); }
+  .summary-card-value.yellow { color: var(--accent); }
+  .summary-card-value.blue   { color: var(--blue); }
+  .summary-card-value.white  { color: var(--text); }
+  .summary-card-value.red    { color: var(--accent2); }
+
+  .batch-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+
+  .batch-table th {
+    background: #1a1a1a;
+    padding: 8px 10px;
+    text-align: left;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .batch-table td {
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  .batch-table tr:hover td { background: #1a1a1a; }
+  .batch-table .vehicle-cell { font-weight: 600; color: var(--accent); }
+  .batch-table .vin-cell { color: var(--muted); font-size: 11px; letter-spacing: 1px; }
+
+  .btn-remove {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 3px 8px;
+    cursor: pointer;
+  }
+
+  .btn-remove:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .btn-export {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 6px 14px;
+    cursor: pointer;
+    float: right;
+    margin-bottom: 12px;
+  }
+
+  .btn-export:hover { border-color: var(--accent); color: var(--accent); }
+
+  .empty-batch {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .empty-batch div {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--border);
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .vin-error {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--accent2);
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Scrap Calc</h1>
+  <span>WareRepair // Vehicle Valuation</span>
+</div>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="switchTab('lookup')">Lookup</div>
+  <div class="tab" onclick="switchTab('batch')" id="batchTab">Batch (0)</div>
+</div>
+
+<!-- LOOKUP TAB -->
+<div class="tab-content active" id="tab-lookup">
+
+  <div class="api-bar">
+    <label>API Key</label>
+    <input type="password" id="apiKey" placeholder="sk-ant-..." />
+  </div>
+
+  <div class="settings-grid">
+    <div class="settings-panel accent-yellow">
+      <h3>Scrap Rate</h3>
+      <div class="row-fields">
+        <div class="mini-field">
+          <label>Steel ($/net ton)</label>
+          <input type="number" id="steelRate" value="220" step="5" />
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-panel accent-green">
+      <h3>Margin Target</h3>
+      <div class="row-fields">
+        <div class="mini-field">
+          <label>Target Margin %</label>
+          <input type="number" id="marginPct" value="30" step="5" class="green" />
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-panel accent-blue">
+      <h3>Transport Costs</h3>
+      <div class="row-fields">
+        <div class="mini-field">
+          <label>Inbound ($)</label>
+          <input type="number" id="inboundCost" value="0" step="10" class="blue" />
+        </div>
+        <div class="mini-field">
+          <label>Outbound ($)</label>
+          <input type="number" id="outboundCost" value="0" step="10" class="blue" />
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-panel accent-red">
+      <h3>Extra Parts I Can Sell</h3>
+      <div class="row-fields">
+        <div class="mini-field">
+          <label>My Est. Value ($)</label>
+          <input type="number" id="partsValue" value="0" step="25" class="red" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIN Input -->
+  <div class="vin-section">
+    <h3>VIN Decode — Primary Input</h3>
+    <div class="vin-row">
+      <input type="text" id="vinInput" placeholder="Paste or type 17-character VIN" maxlength="17" oninput="this.value=this.value.toUpperCase()" />
+      <button class="btn-decode" id="decodeBtn" onclick="decodeVIN()">DECODE</button>
+    </div>
+    <div id="vinResult"></div>
+  </div>
+
+  <!-- Manual Fallback -->
+  <div class="manual-section">
+    <span class="manual-toggle" onclick="toggleManual()">▸ No VIN? Enter manually</span>
+    <div class="manual-fields" id="manualFields">
+      <div class="field">
+        <label>Year</label>
+        <input type="text" id="year" placeholder="2009" maxlength="4" />
+      </div>
+      <div class="field">
+        <label>Make</label>
+        <input type="text" id="make" placeholder="Jeep" />
+      </div>
+      <div class="field">
+        <label>Model</label>
+        <input type="text" id="model" placeholder="Grand Cherokee" />
+      </div>
+      <div class="field">
+        <label>Engine</label>
+        <input type="text" id="engine" placeholder="3.7 V6" />
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-lookup" id="lookupBtn" onclick="lookup()">GET SCRAP VALUE</button>
+
+  <div id="results"></div>
+</div>
+
+<!-- BATCH TAB -->
+<div class="tab-content" id="tab-batch">
+  <div id="batchSummary"></div>
+  <button class="btn-export" onclick="exportCSV()">Export CSV</button>
+  <div style="clear:both;"></div>
+  <div id="batchTable"></div>
+</div>
+
+<script>
+let batch = [];
+let decodedVehicle = null;
+let manualOpen = false;
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.tab[onclick="switchTab('${name}')"]`).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'batch') renderBatch();
+}
+
+function toggleManual() {
+  manualOpen = !manualOpen;
+  const el = document.getElementById('manualFields');
+  const toggle = document.querySelector('.manual-toggle');
+  el.classList.toggle('open', manualOpen);
+  toggle.textContent = manualOpen ? '▾ No VIN? Enter manually' : '▸ No VIN? Enter manually';
+}
+
+async function decodeVIN() {
+  const vin = document.getElementById('vinInput').value.trim().toUpperCase();
+  const resultEl = document.getElementById('vinResult');
+
+  if (vin.length !== 17) {
+    resultEl.innerHTML = '<div class="vin-error">VIN must be exactly 17 characters.</div>';
+    return;
+  }
+
+  const btn = document.getElementById('decodeBtn');
+  btn.disabled = true;
+  btn.textContent = '...';
+  resultEl.innerHTML = '';
+
+  try {
+    const res = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/${vin}?format=json`);
+    const data = await res.json();
+
+    const get = (var_) => {
+      const found = data.Results.find(r => r.Variable === var_);
+      return (found && found.Value && found.Value !== 'Not Applicable' && found.Value !== null) ? found.Value : null;
+    };
+
+    const year  = get('Model Year');
+    const make  = get('Make');
+    const model = get('Model');
+    const trim  = get('Trim');
+    const engine = [get('Engine Number of Cylinders'), get('Displacement (L)')].filter(Boolean);
+    const drive = get('Drive Type');
+    const engineStr = get('Engine Model') || (engine.length ? `${engine[1]}L ${engine[0]}cyl` : null);
+
+    if (!year || !make || !model) {
+      resultEl.innerHTML = '<div class="vin-error">Could not decode VIN — check the number and try again.</div>';
+      btn.disabled = false;
+      btn.textContent = 'DECODE';
+      return;
+    }
+
+    decodedVehicle = { vin, year, make, model, trim, engine: engineStr, drive };
+
+    const label = [year, make, model, trim, engineStr, drive].filter(Boolean).join(' · ');
+
+    resultEl.innerHTML = `
+      <div class="vin-decoded">
+        <span>✓ ${label}</span>
+        <button class="clear-vin" onclick="clearVIN()">✕ Clear</button>
+      </div>`;
+
+    // Auto-fill manual fields too as reference
+    if (year)  document.getElementById('year').value  = year;
+    if (make)  document.getElementById('make').value  = make;
+    if (model) document.getElementById('model').value = model;
+    if (engineStr) document.getElementById('engine').value = engineStr;
+
+  } catch(e) {
+    resultEl.innerHTML = `<div class="vin-error">Decode failed: ${e.message}</div>`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'DECODE';
+}
+
+function clearVIN() {
+  decodedVehicle = null;
+  document.getElementById('vinInput').value = '';
+  document.getElementById('vinResult').innerHTML = '';
+}
+
+async function lookup() {
+  const apiKey     = document.getElementById('apiKey').value.trim();
+  const steelRate  = parseFloat(document.getElementById('steelRate').value)    || 220;
+  const marginPct  = parseFloat(document.getElementById('marginPct').value)    || 30;
+  const inbound    = parseFloat(document.getElementById('inboundCost').value)  || 0;
+  const outbound   = parseFloat(document.getElementById('outboundCost').value) || 0;
+  const extraParts = parseFloat(document.getElementById('partsValue').value)   || 0;
+
+  if (!apiKey) { alert('Enter your API key first'); return; }
+
+  // Determine vehicle source
+  let vehicleStr = '';
+  let vinDisplay = '';
+
+  if (decodedVehicle) {
+    const v = decodedVehicle;
+    vehicleStr = [v.year, v.make, v.model, v.trim, v.engine, v.drive].filter(Boolean).join(' ');
+    vinDisplay = v.vin;
+  } else {
+    const year   = document.getElementById('year').value.trim();
+    const make   = document.getElementById('make').value.trim();
+    const model  = document.getElementById('model').value.trim();
+    const engine = document.getElementById('engine').value.trim();
+    if (!year || !make || !model) { alert('Enter year, make, and model — or decode a VIN first.'); return; }
+    vehicleStr = [year, make, model, engine].filter(Boolean).join(' ');
+  }
+
+  const btn = document.getElementById('lookupBtn');
+  btn.disabled = true;
+
+  const container = document.getElementById('results');
+  const loadingEl = document.createElement('div');
+  loadingEl.className = 'result-panel';
+  loadingEl.innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      <div class="loading-steps">
+        <div class="loading-step active" id="step1">Looking up ${vehicleStr}…</div>
+        <div class="loading-step" id="step2">Calculating scrap values…</div>
+      </div>
+    </div>`;
+  container.insertBefore(loadingEl, container.firstChild);
+
+  const prompt = `You are a vehicle scrap valuation expert for a professional auto recycler in the USA.
+Return ONLY a valid JSON object. No markdown, no code fences, no extra text.
+
+Vehicle: ${vehicleStr}${vinDisplay ? ` (VIN: ${vinDisplay})` : ''}
+
+{
+  "year": "<year>",
+  "make": "<make>",
+  "model": "<model>",
+  "engine": "<engine description e.g. 3.7L V6>",
+  "curb_weight_lbs": <number, best estimate for this exact trim/engine/drivetrain>,
+  "weight_confidence": "<low|medium|high>",
+  "cat_low": <number, USD scrap>,
+  "cat_high": <number, USD scrap>,
+  "cat_count": <number>,
+  "cat_notes": "<grade and type e.g. two mid-grade Korean cats>",
+  "fast_parts": [
+    { "name": "<part>", "value_low": <number>, "value_high": <number> }
+  ],
+  "notes": "<1-2 sentences: scrapping tips, notable pulls, watch-outs for this specific vehicle>"
+}
+
+For fast_parts: list 4-6 parts with strong salvage demand for this exact vehicle. Use realistic used/salvage values not retail.
+For curb_weight_lbs: use the most accurate weight for this specific engine and drivetrain configuration.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 700,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const raw   = data.content?.[0]?.text || '';
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const d     = JSON.parse(clean);
+
+    const weightTons   = d.curb_weight_lbs / 2000;
+    const steelValue   = weightTons * steelRate;
+    const catMid       = (d.cat_low + d.cat_high) / 2;
+    const totalRevenue = steelValue + catMid + extraParts;
+    const totalCosts   = inbound + outbound;
+    const netRevenue   = totalRevenue - totalCosts;
+    const maxPay       = Math.max(0, netRevenue * (1 - marginPct / 100));
+
+    const label = `${d.year} ${d.make} ${d.model} ${d.engine || ''}`.trim();
+
+    batch.unshift({
+      id: Date.now(), label, vin: vinDisplay,
+      year: d.year, make: d.make, model: d.model, engine: d.engine,
+      curb_weight_lbs: d.curb_weight_lbs, weightTons, steelValue, steelRate,
+      catLow: d.cat_low, catHigh: d.cat_high, catMid,
+      cat_count: d.cat_count, cat_notes: d.cat_notes,
+      extraParts, inbound, outbound,
+      totalRevenue, totalCosts, netRevenue, maxPay, marginPct,
+      fast_parts: d.fast_parts || [], notes: d.notes || ''
+    });
+    updateBatchTab();
+
+    const partsHtml = (d.fast_parts && d.fast_parts.length) ? `
+      <div class="parts-list">
+        <h4>Fast-Moving Parts — ${label}</h4>
+        <div class="parts-grid">
+          ${d.fast_parts.map(p => `
+            <div class="part-item">
+              <span class="part-name">${p.name}</span>
+              <span class="part-val">$${p.value_low}–$${p.value_high}</span>
+            </div>`).join('')}
+        </div>
+      </div>` : '';
+
+    const html = `
+      <div class="max-pay-banner">
+        <div>
+          <div class="max-pay-label">Max You Should Pay</div>
+          <div class="max-pay-value">$${maxPay.toFixed(0)}</div>
+        </div>
+        <div class="max-pay-breakdown">
+          Revenue: $${totalRevenue.toFixed(0)}<br>
+          Costs: $${totalCosts.toFixed(0)}<br>
+          Net: $${netRevenue.toFixed(0)}<br>
+          @ ${marginPct}% margin
+        </div>
+      </div>
+
+      <div class="result-panel">
+        <div class="result-header">
+          <div class="result-vehicle">${label}</div>
+          <div style="text-align:right;">
+            ${vinDisplay ? `<div class="result-vin">${vinDisplay}</div>` : ''}
+            <div style="font-size:11px;color:var(--muted);">${d.curb_weight_lbs.toLocaleString()} lbs · ${weightTons.toFixed(2)} NT · ${d.weight_confidence} confidence</div>
+          </div>
+        </div>
+        <div class="result-body">
+          <div class="section-divider">Revenue</div>
+          <div class="stat">
+            <div class="stat-label">Steel</div>
+            <div class="stat-value yellow">$${steelValue.toFixed(0)}</div>
+            <div class="stat-sub">@ $${steelRate}/NT</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Cats (${d.cat_count})</div>
+            <div class="stat-value yellow">$${d.cat_low}–$${d.cat_high}</div>
+            <div class="stat-sub">${d.cat_notes}</div>
+          </div>
+          ${extraParts > 0 ? `
+          <div class="stat">
+            <div class="stat-label">My Parts</div>
+            <div class="stat-value red">$${extraParts.toFixed(0)}</div>
+            <div class="stat-sub">your estimate</div>
+          </div>` : ''}
+          <div class="stat">
+            <div class="stat-label">Total Revenue</div>
+            <div class="stat-value white">$${totalRevenue.toFixed(0)}</div>
+            <div class="stat-sub">steel + cats + parts</div>
+          </div>
+          <div class="section-divider">Costs</div>
+          <div class="stat">
+            <div class="stat-label">Inbound</div>
+            <div class="stat-value blue">$${inbound.toFixed(0)}</div>
+            <div class="stat-sub">transport in</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Outbound</div>
+            <div class="stat-value blue">$${outbound.toFixed(0)}</div>
+            <div class="stat-sub">transport out</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Net Revenue</div>
+            <div class="stat-value green">$${netRevenue.toFixed(0)}</div>
+            <div class="stat-sub">after transport</div>
+          </div>
+        </div>
+        ${partsHtml}
+        ${d.notes ? `<div class="narrative">⚑ ${d.notes}</div>` : ''}
+      </div>`;
+
+    loadingEl.outerHTML = html;
+
+  } catch(e) {
+    loadingEl.innerHTML = `<div class="error-msg">Error: ${e.message}</div>`;
+  }
+
+  btn.disabled = false;
+}
+
+function updateBatchTab() {
+  document.getElementById('batchTab').textContent = `Batch (${batch.length})`;
+}
+
+function removeFromBatch(id) {
+  batch = batch.filter(b => b.id !== id);
+  updateBatchTab();
+  renderBatch();
+}
+
+function renderBatch() {
+  const summaryEl = document.getElementById('batchSummary');
+  const tableEl   = document.getElementById('batchTable');
+
+  if (!batch.length) {
+    summaryEl.innerHTML = '';
+    tableEl.innerHTML = `<div class="empty-batch"><div>NO VEHICLES YET</div>Look up vehicles on the Lookup tab — they appear here automatically.</div>`;
+    return;
+  }
+
+  const totalSteel   = batch.reduce((s, b) => s + b.steelValue, 0);
+  const totalCat     = batch.reduce((s, b) => s + b.catMid, 0);
+  const totalParts   = batch.reduce((s, b) => s + b.extraParts, 0);
+  const totalRev     = batch.reduce((s, b) => s + b.totalRevenue, 0);
+  const totalCosts   = batch.reduce((s, b) => s + b.totalCosts, 0);
+  const totalNet     = batch.reduce((s, b) => s + b.netRevenue, 0);
+  const totalMaxPay  = batch.reduce((s, b) => s + b.maxPay, 0);
+  const totalWeight  = batch.reduce((s, b) => s + b.curb_weight_lbs, 0);
+
+  summaryEl.innerHTML = `
+    <div class="batch-summary">
+      <div class="summary-card">
+        <div class="summary-card-label">Vehicles</div>
+        <div class="summary-card-value white">${batch.length}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-card-label">Total Weight</div>
+        <div class="summary-card-value white">${(totalWeight/2000).toFixed(2)} NT</div>
+      </div>
+      <div class="summary-card accent-yellow">
+        <div class="summary-card-label">Steel Value</div>
+        <div class="summary-card-value yellow">$${totalSteel.toFixed(0)}</div>
+      </div>
+      <div class="summary-card accent-yellow">
+        <div class="summary-card-label">Cat Value</div>
+        <div class="summary-card-value yellow">$${totalCat.toFixed(0)}</div>
+      </div>
+      ${totalParts > 0 ? `
+      <div class="summary-card">
+        <div class="summary-card-label">Parts Est.</div>
+        <div class="summary-card-value red">$${totalParts.toFixed(0)}</div>
+      </div>` : ''}
+      <div class="summary-card">
+        <div class="summary-card-label">Total Revenue</div>
+        <div class="summary-card-value white">$${totalRev.toFixed(0)}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-card-label">Total Costs</div>
+        <div class="summary-card-value blue">$${totalCosts.toFixed(0)}</div>
+      </div>
+      <div class="summary-card highlight2">
+        <div class="summary-card-label">Net Revenue</div>
+        <div class="summary-card-value yellow">$${totalNet.toFixed(0)}</div>
+      </div>
+      <div class="summary-card highlight">
+        <div class="summary-card-label">Total Max Pay</div>
+        <div class="summary-card-value green">$${totalMaxPay.toFixed(0)}</div>
+      </div>
+    </div>`;
+
+  tableEl.innerHTML = `
+    <table class="batch-table">
+      <thead>
+        <tr>
+          <th>Vehicle</th>
+          <th>VIN</th>
+          <th>NT</th>
+          <th>Steel</th>
+          <th>Cats</th>
+          <th>Parts</th>
+          <th>Revenue</th>
+          <th>Costs</th>
+          <th>Net</th>
+          <th>Max Pay</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${batch.map(b => `
+          <tr>
+            <td class="vehicle-cell">${b.label}</td>
+            <td class="vin-cell">${b.vin || '—'}</td>
+            <td style="color:var(--muted)">${b.weightTons.toFixed(2)}</td>
+            <td style="color:var(--accent)">$${b.steelValue.toFixed(0)}</td>
+            <td style="color:var(--accent)">$${b.catLow}–$${b.catHigh}</td>
+            <td style="color:var(--accent2)">${b.extraParts > 0 ? '$'+b.extraParts.toFixed(0) : '—'}</td>
+            <td>$${b.totalRevenue.toFixed(0)}</td>
+            <td style="color:var(--blue)">${b.totalCosts > 0 ? '$'+b.totalCosts.toFixed(0) : '—'}</td>
+            <td style="color:var(--green)">$${b.netRevenue.toFixed(0)}</td>
+            <td style="color:var(--green);font-weight:600">$${b.maxPay.toFixed(0)}</td>
+            <td><button class="btn-remove" onclick="removeFromBatch(${b.id})">✕</button></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function exportCSV() {
+  if (!batch.length) return;
+  const headers = ['Vehicle','VIN','Weight (NT)','Steel $','Cat Low','Cat High','Parts $','Revenue $','Costs $','Net $','Max Pay $'];
+  const rows = batch.map(b => [
+    b.label, b.vin || '',
+    b.weightTons.toFixed(2),
+    b.steelValue.toFixed(0),
+    b.catLow, b.catHigh,
+    b.extraParts.toFixed(0),
+    b.totalRevenue.toFixed(0),
+    b.totalCosts.toFixed(0),
+    b.netRevenue.toFixed(0),
+    b.maxPay.toFixed(0)
+  ]);
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv,' + encodeURIComponent(csv);
+  a.download = 'scrap-batch.csv';
+  a.click();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const vin = document.getElementById('vinInput').value.trim();
+    if (vin.length === 17 && !document.getElementById('decodeBtn').disabled) {
+      decodeVIN();
+    }
+  }
+});
+</script>
+</body>
+</html>
